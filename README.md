@@ -61,15 +61,22 @@ npm run lint
 
 - **Application Name**: পারিবারিক ব্যয় ও হিসাব (Household & Family Expense Manager)
 - **Package ID**: `com.householdexpense.app`
-- **Production API URL**: `https://household-expense-manager-backend.vercel.app/api/v1`
+- **Version**: `1.0.0` (Build 1)
+- **File Size**: `96.04 MB` (Valid ZIP/APK signature `504b0304`)
 - **Build Date**: 2026-11-06
-- **Download Link**: [Download Household Expense Manager APK](releases/household-expense-manager.apk)
+- **Production API URL**: `https://household-expense-manager-backend.vercel.app/api/v1`
+- **EAS Build ID**: `23eb04ef-f70f-43a7-9e9f-1aea279d155d`
+- **EAS Build Logs**: [View on Expo Dashboard](https://expo.dev/accounts/shafiqulislamsagor/projects/household-expense-manager/builds/23eb04ef-f70f-43a7-9e9f-1aea279d155d)
+- **Direct APK Download Link (Fast Cloud CDN)**: [Download Household Expense Manager APK (Direct)](https://expo.dev/artifacts/eas/GbLRtfp0mCjDuyYKdiNkIG9NBQwZBbPkbugZxOC8lEQ.apk)
+- **Relative Download Link**: [Download Household Expense Manager APK](https://chatgpt.com/c/mobile/releases/household-expense-manager.apk)
+- **Local File Path**: `releases/household-expense-manager.apk`
 
 ### Installation Instructions:
-1. Download `household-expense-manager.apk` to your Android device via the link above or transfer it from `releases/`.
-2. Tap the downloaded file to install.
-3. If prompted with *"Install unknown apps"* or *"Blocked by Play Protect"*, tap **Settings** and enable **"Allow from this source"**, then proceed with the installation.
-4. Launch the application, log in with your credentials, and start managing household finances with offline support.
+1. Tap the **[Download Household Expense Manager APK (Direct)](https://expo.dev/artifacts/eas/GbLRtfp0mCjDuyYKdiNkIG9NBQwZBbPkbugZxOC8lEQ.apk)** link above on your Android phone.
+2. Tap the downloaded `household-expense-manager.apk` file to start installation.
+3. If Android prompts *"For your security, your phone is not allowed to install unknown apps from this source"*, tap **Settings** $\rightarrow$ toggle on **"Allow from this source"**.
+4. If Google Play Protect displays a prompt (*"Unrecognized app"*), tap **"More details"** $\rightarrow$ tap **"Install anyway"**.
+5. Launch the application, log in with your credentials, and enjoy full Bengali accounting with offline SQLite sync!
 
 ---
 
