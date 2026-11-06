@@ -55,6 +55,24 @@ npm run typecheck
 npm run lint
 ```
 
+---
+
+## Android APK Download
+
+- **Application Name**: পারিবারিক ব্যয় ও হিসাব (Household & Family Expense Manager)
+- **Package ID**: `com.householdexpense.app`
+- **Production API URL**: `https://household-expense-manager-backend.vercel.app/api/v1`
+- **Build Date**: 2026-11-06
+- **Download Link**: [Download Household Expense Manager APK](releases/household-expense-manager.apk)
+
+### Installation Instructions:
+1. Download `household-expense-manager.apk` to your Android device via the link above or transfer it from `releases/`.
+2. Tap the downloaded file to install.
+3. If prompted with *"Install unknown apps"* or *"Blocked by Play Protect"*, tap **Settings** and enable **"Allow from this source"**, then proceed with the installation.
+4. Launch the application, log in with your credentials, and start managing household finances with offline support.
+
+---
+
 ## Android APK / AAB Build Instructions (EAS)
 
 To produce production APK/AAB files:
