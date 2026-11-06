@@ -6,13 +6,8 @@ const getDevApiUrl = () => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // Android emulator uses 10.0.2.2 to access host machine
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5000/api/v1';
-  }
-
-  // iOS simulator or web
-  return 'http://localhost:5000/api/v1';
+  // Default production fallback
+  return 'https://household-expense-manager-backend.vercel.app/api/v1';
 };
 
 export const API_BASE_URL = getDevApiUrl();
