@@ -68,7 +68,8 @@ npm run lint
 - **EAS Build ID**: `23eb04ef-f70f-43a7-9e9f-1aea279d155d`
 - **EAS Build Logs**: [View on Expo Dashboard](https://expo.dev/accounts/shafiqulislamsagor/projects/household-expense-manager/builds/23eb04ef-f70f-43a7-9e9f-1aea279d155d)
 - **Direct APK Download Link (Fast Cloud CDN)**: [Download Household Expense Manager APK (Direct)](https://expo.dev/artifacts/eas/GbLRtfp0mCjDuyYKdiNkIG9NBQwZBbPkbugZxOC8lEQ.apk)
-- **Relative Download Link**: [Download Household Expense Manager APK](https://chatgpt.com/c/mobile/releases/household-expense-manager.apk)
+- **GitHub Direct Download Link**: [Download Household Expense Manager APK (GitHub)](https://github.com/shafiqulislamsagor-developer/household-expense-manager-mobile/raw/main/releases/household-expense-manager.apk)
+- **Relative Download Link**: [Download Household Expense Manager APK](releases/household-expense-manager.apk)
 - **Local File Path**: `releases/household-expense-manager.apk`
 
 ### Installation Instructions:
