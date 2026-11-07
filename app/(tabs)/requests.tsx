@@ -48,7 +48,7 @@ export default function RequestsScreen() {
   const [closedMonths, setClosedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // New Request Modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -88,6 +88,7 @@ export default function RequestsScreen() {
     try {
       const local = await LocalDbService.getExpenseRequests(user.householdId);
       setRequests(local);
+      setLoading(false); // Instant load without skeletons!
 
       try {
         const [res, closedRes] = await Promise.all([

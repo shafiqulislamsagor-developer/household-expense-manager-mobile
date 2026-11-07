@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS household_expenses (
   split_type TEXT DEFAULT 'EQUAL',
   splits_json TEXT,
   approval_status TEXT DEFAULT 'APPROVED',
+  is_post_closing_adjustment INTEGER DEFAULT 0,
+  post_closing_notes TEXT,
   client_uuid TEXT UNIQUE,
   is_synced INTEGER DEFAULT 0,
   updated_at TEXT
@@ -79,6 +81,8 @@ CREATE TABLE IF NOT EXISTS expense_requests (
   splits_json TEXT,
   status TEXT DEFAULT 'PENDING',
   rejection_reason TEXT,
+  is_post_closing_adjustment INTEGER DEFAULT 0,
+  post_closing_notes TEXT,
   client_uuid TEXT UNIQUE,
   is_synced INTEGER DEFAULT 0,
   updated_at TEXT

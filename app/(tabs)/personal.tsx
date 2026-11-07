@@ -49,7 +49,7 @@ export default function PersonalScreen() {
   const [incomes, setIncomes] = useState<PersonalIncome[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Month filtering
   const now = new Date();
@@ -91,6 +91,7 @@ export default function PersonalScreen() {
       ]);
       setExpenses(expList);
       setIncomes(incList);
+      setLoading(false); // Instant load without skeletons!
 
       try {
         const [serverExp, serverInc] = await Promise.all([

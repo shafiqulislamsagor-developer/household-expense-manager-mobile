@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import React, { useState } from 'react';
 import {
   View,
@@ -48,14 +49,54 @@ export default function LoginScreen() {
     setIsLoading(true);
     setError(null);
 
+    const trimmedPhone = phone.trim();
+
     try {
-      const response = await ApiClient.login(phone.trim(), password);
+      const netState = await NetInfo.fetch();
+      const isOnline = !!(netState.isConnected && netState.isInternetReachable !== false);
+
+      if (!isOnline) {
+        // Offline: Check 365-day offline session
+        const offlineSession = await AuthStorage.getOfflineSession();
+        if (offlineSession && offlineSession.phone === trimmedPhone) {
+          await AuthStorage.setTokens(offlineSession.token);
+          await AuthStorage.setUserInfo(offlineSession.user);
+
+          dispatch(
+            setAuth({
+              user: offlineSession.user,
+              token: offlineSession.token,
+            })
+          );
+
+          showToast({
+            type: 'success',
+            message: `স্বাগতম, ${offlineSession.user.name}! অফলাইন মোডে প্রবেশ করেছেন।`,
+          });
+
+          if (offlineSession.user.role === 'SUPER_ADMIN') {
+            router.replace('/super-admin');
+          } else {
+            router.replace('/(tabs)');
+          }
+          return;
+        } else {
+          const offlineMsg =
+            'প্রথমবার লগইনের জন্য ইন্টারনেট সংযোগ প্রয়োজন। অনুগ্রহ করে ইন্টারনেট সংযোগ চালু করে চেষ্টা করুন।';
+          setError(offlineMsg);
+          showToast({ type: 'error', message: offlineMsg });
+          return;
+        }
+      }
+
+      const response = await ApiClient.login(trimmedPhone, password);
 
       if (response.success && response.data) {
         const { user, accessToken, refreshToken } = response.data;
 
         await AuthStorage.setTokens(accessToken, refreshToken);
         await AuthStorage.setUserInfo(user);
+        await AuthStorage.saveOfflineSession(user, accessToken);
 
         dispatch(
           setAuth({
@@ -79,6 +120,44 @@ export default function LoginScreen() {
         }
       }
     } catch (err: any) {
+      // If network failed during login call, check for offline session fallback
+      if (
+        err.message?.includes('ইন্টারনেট') ||
+        err.message?.includes('Network request failed') ||
+        err.name === 'TypeError'
+      ) {
+        const offlineSession = await AuthStorage.getOfflineSession();
+        if (offlineSession && offlineSession.phone === trimmedPhone) {
+          await AuthStorage.setTokens(offlineSession.token);
+          await AuthStorage.setUserInfo(offlineSession.user);
+
+          dispatch(
+            setAuth({
+              user: offlineSession.user,
+              token: offlineSession.token,
+            })
+          );
+
+          showToast({
+            type: 'success',
+            message: `স্বাগতম, ${offlineSession.user.name}! অফলাইন মোডে প্রবেশ করেছেন।`,
+          });
+
+          if (offlineSession.user.role === 'SUPER_ADMIN') {
+            router.replace('/super-admin');
+          } else {
+            router.replace('/(tabs)');
+          }
+          return;
+        }
+
+        const offlineMsg =
+          'প্রথমবার লগইনের জন্য ইন্টারনেট সংযোগ প্রয়োজন। অনুগ্রহ করে ইন্টারনেট সংযোগ চালু করে চেষ্টা করুন।';
+        setError(offlineMsg);
+        showToast({ type: 'error', message: offlineMsg });
+        return;
+      }
+
       const errMsg = err.message || 'লগইন করতে ব্যর্থ হয়েছে। তথ্যের সঠিকতা যাচাই করুন।';
       setError(errMsg);
       showToast({ type: 'error', message: errMsg });

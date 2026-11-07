@@ -53,7 +53,7 @@ export default function HouseholdScreen() {
   const [closedMonths, setClosedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Month filtering
   const now = new Date();
@@ -92,6 +92,7 @@ export default function HouseholdScreen() {
     try {
       const local = await LocalDbService.getHouseholdExpenses(user.householdId);
       setExpenses(local);
+      setLoading(false); // Instant load without skeletons!
 
       try {
         const [res, closedRes] = await Promise.all([
@@ -383,6 +384,23 @@ export default function HouseholdScreen() {
     }
   };
 
+  const postClosingPendingExpenses = useMemo(() => {
+    return expenses.filter((e) => e.approvalStatus === 'POST_CLOSING_PENDING');
+  }, [expenses]);
+
+  const handleReviewPostClosing = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      await ApiClient.reviewPostClosingAdjustment(id, status);
+      showToast({
+        type: 'success',
+        message: status === 'APPROVED' ? 'পোস্ট-ক্লোজিং খরচ অনুমোদিত হয়েছে।' : 'পোস্ট-ক্লোজিং খরচ বাতিল হয়েছে।',
+      });
+      await loadData();
+    } catch (err: any) {
+      showToast({ type: 'error', message: err.message || 'পর্যালোচনা ব্যর্থ হয়েছে।' });
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -438,6 +456,87 @@ export default function HouseholdScreen() {
                 এই মাসের আর্থিক হিসাব সম্পন্ন ও ক্লোজ করা হয়েছে। নতুন এন্ট্রি বা এডিট অনুমোদিত নয়।
               </BengaliText>
             </View>
+          </View>
+        )}
+
+        {/* Post-Closing Pending Adjustments Banner */}
+        {postClosingPendingExpenses.length > 0 && (
+          <View
+            style={[
+              styles.closedMonthBanner,
+              {
+                backgroundColor: isDark ? '#422006' : '#FEF3C7',
+                borderColor: isDark ? '#B45309' : '#F59E0B',
+                marginVertical: 10,
+              },
+            ]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <Ionicons name="time" size={20} color="#D97706" style={{ marginRight: 8 }} />
+              <BengaliText variant="bodyBold" color="#B45309">
+                হিসাব বন্ধের পর অফলাইন খরচ ({postClosingPendingExpenses.length}টি)
+              </BengaliText>
+            </View>
+            <BengaliText variant="caption" color={isDark ? '#FDE68A' : '#92400E'} style={{ marginBottom: 10 }}>
+              এই খরচগুলো মাস ক্লোজ থাকার সময় অফলাইনে জমা পড়েছিল। অ্যাডমিন অনুমোদন দিলে হিসাব বন্ধ পরবর্তী সমন্বয় হিসেবে যুক্ত হবে।
+            </BengaliText>
+
+            {postClosingPendingExpenses.map((p) => (
+              <View
+                key={p._id || p.clientUuid}
+                style={{
+                  backgroundColor: isDark ? '#292524' : '#FFFFFF',
+                  padding: 10,
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  borderWidth: 1,
+                  borderColor: isDark ? '#57534E' : '#FDE68A',
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <BengaliText variant="bodyBold" color={colors.text}>
+                    {p.title}
+                  </BengaliText>
+                  <BengaliText variant="bodyBold" color={colors.primary}>
+                    {MoneyUtil.formatBengaliCurrency(p.amountPaisa)}
+                  </BengaliText>
+                </View>
+                <BengaliText variant="caption" color={colors.textMuted} style={{ marginTop: 2 }}>
+                  তারিখ: {new Date(p.date).toLocaleDateString('bn-BD')} {p.note ? `• ${p.note}` : ''}
+                </BengaliText>
+
+                {isAdmin && (
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => handleReviewPostClosing(p._id, 'APPROVED')}
+                      style={{
+                        backgroundColor: '#16A34A',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <BengaliText variant="caption" color="#FFFFFF" weight="700">
+                        অনুমোদন করুন
+                      </BengaliText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleReviewPostClosing(p._id, 'REJECTED')}
+                      style={{
+                        backgroundColor: colors.danger,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <BengaliText variant="caption" color="#FFFFFF" weight="700">
+                        বাতিল
+                      </BengaliText>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
           </View>
         )}
 
@@ -615,7 +714,11 @@ export default function HouseholdScreen() {
                     type="EXPENSE"
                     category="পারিবারিক"
                     paidFromFund={item.paidFromFund}
-                    subtitle={item.note}
+                    subtitle={
+                      item.isPostClosingAdjustment
+                        ? `${item.note ? item.note + ' • ' : ''}🏷️ হিসাব বন্ধ পরবর্তী সংযোজন`
+                        : item.note
+                    }
                     isLocked={isTransactionMonthClosed(item.date, closedMonths)}
                     onEdit={() => openEditModal(item)}
                     onDelete={() => confirmDelete(item)}

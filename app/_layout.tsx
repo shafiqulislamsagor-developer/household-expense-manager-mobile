@@ -27,9 +27,19 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
         await LocalDbService.init();
 
         // Check authentication & app lock
-        const token = await AuthStorage.getAccessToken();
-        const user = await AuthStorage.getUserInfo();
+        let token = await AuthStorage.getAccessToken();
+        let user = await AuthStorage.getUserInfo();
         const pin = await AuthStorage.getAppPin();
+
+        if (!token || !user) {
+          const offlineSession = await AuthStorage.getOfflineSession();
+          if (offlineSession) {
+            token = offlineSession.token;
+            user = offlineSession.user;
+            await AuthStorage.setTokens(token);
+            await AuthStorage.setUserInfo(user);
+          }
+        }
 
         if (token && user) {
           dispatch(

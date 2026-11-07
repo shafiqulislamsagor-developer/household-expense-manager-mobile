@@ -22,6 +22,26 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
   if (!dbInstance) {
     dbInstance = await SQLite.openDatabaseAsync('household_expense.db');
     await dbInstance.execAsync(CREATE_TABLES_SQL);
+    try {
+      await dbInstance.execAsync(
+        'ALTER TABLE household_expenses ADD COLUMN is_post_closing_adjustment INTEGER DEFAULT 0;'
+      );
+    } catch {}
+    try {
+      await dbInstance.execAsync(
+        'ALTER TABLE household_expenses ADD COLUMN post_closing_notes TEXT;'
+      );
+    } catch {}
+    try {
+      await dbInstance.execAsync(
+        'ALTER TABLE expense_requests ADD COLUMN is_post_closing_adjustment INTEGER DEFAULT 0;'
+      );
+    } catch {}
+    try {
+      await dbInstance.execAsync(
+        'ALTER TABLE expense_requests ADD COLUMN post_closing_notes TEXT;'
+      );
+    } catch {}
   }
   return dbInstance;
 }
@@ -209,8 +229,8 @@ export class LocalDbService {
   public static async saveHouseholdExpense(expense: HouseholdExpense, isSynced = 0): Promise<void> {
     const db = await getDb();
     await db.runAsync(
-      `INSERT OR REPLACE INTO household_expenses (id, household_id, paid_by_user_id, paid_from_fund, amount_paisa, category_id, title, date, note, split_type, splits_json, approval_status, client_uuid, is_synced, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT OR REPLACE INTO household_expenses (id, household_id, paid_by_user_id, paid_from_fund, amount_paisa, category_id, title, date, note, split_type, splits_json, approval_status, is_post_closing_adjustment, post_closing_notes, client_uuid, is_synced, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         expense._id,
         expense.householdId,
@@ -224,6 +244,8 @@ export class LocalDbService {
         expense.splitType || 'EQUAL',
         JSON.stringify(expense.splits || []),
         expense.approvalStatus || 'APPROVED',
+        expense.isPostClosingAdjustment ? 1 : 0,
+        expense.postClosingNotes || '',
         expense.clientUuid || expense._id,
         isSynced,
         new Date().toISOString(),
@@ -250,6 +272,8 @@ export class LocalDbService {
       splitType: r.split_type,
       splits: r.splits_json ? JSON.parse(r.splits_json) : [],
       approvalStatus: r.approval_status,
+      isPostClosingAdjustment: !!r.is_post_closing_adjustment,
+      postClosingNotes: r.post_closing_notes,
       clientUuid: r.client_uuid,
     }));
   }
@@ -266,8 +290,8 @@ export class LocalDbService {
   public static async saveExpenseRequest(req: ExpenseRequest, isSynced = 0): Promise<void> {
     const db = await getDb();
     await db.runAsync(
-      `INSERT OR REPLACE INTO expense_requests (id, household_id, requested_by_user_id, amount_paisa, category_id, title, date, note, split_type, splits_json, status, rejection_reason, client_uuid, is_synced, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT OR REPLACE INTO expense_requests (id, household_id, requested_by_user_id, amount_paisa, category_id, title, date, note, split_type, splits_json, status, rejection_reason, is_post_closing_adjustment, post_closing_notes, client_uuid, is_synced, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         req._id,
         req.householdId,
@@ -281,6 +305,8 @@ export class LocalDbService {
         JSON.stringify(req.splits || []),
         req.status || 'PENDING',
         req.rejectionReason || '',
+        req.isPostClosingAdjustment ? 1 : 0,
+        req.postClosingNotes || '',
         req.clientUuid || req._id,
         isSynced,
         new Date().toISOString(),
@@ -307,6 +333,8 @@ export class LocalDbService {
       splits: r.splits_json ? JSON.parse(r.splits_json) : [],
       status: r.status,
       rejectionReason: r.rejection_reason,
+      isPostClosingAdjustment: !!r.is_post_closing_adjustment,
+      postClosingNotes: r.post_closing_notes,
       clientUuid: r.client_uuid,
     }));
   }

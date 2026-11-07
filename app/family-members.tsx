@@ -78,9 +78,18 @@ export default function FamilyMembersScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.role === 'HOME_ADMIN' || user?.role === 'SUPER_ADMIN';
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [members, setMembers] = useState<MemberProfile[]>([]);
+
+  // Add Member Modal State
+  const [addMemberModal, setAddMemberModal] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
+  const [newMemberPass, setNewMemberPass] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<'HOME_USER' | 'HOME_ADMIN'>('HOME_USER');
+  const [newMemberRel, setNewMemberRel] = useState('OTHER');
+  const [isSubmittingNewMember, setIsSubmittingNewMember] = useState(false);
 
   // Edit Modal
   const [editModal, setEditModal] = useState(false);
@@ -117,6 +126,50 @@ export default function FamilyMembersScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     loadData();
+  };
+
+  const handleAddMember = async () => {
+    if (!newMemberName.trim() || !newMemberPhone.trim() || !newMemberPass.trim()) {
+      showToast({ type: 'error', message: 'সকল প্রয়োজনীয় তথ্য পূরণ করুন।' });
+      return;
+    }
+
+    if (newMemberPass.trim().length < 6) {
+      showToast({ type: 'error', message: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' });
+      return;
+    }
+
+    setIsSubmittingNewMember(true);
+    try {
+      await ApiClient.addMember({
+        name: newMemberName.trim(),
+        phone: newMemberPhone.trim(),
+        password: newMemberPass.trim(),
+        role: newMemberRole,
+        relationship: newMemberRel,
+      } as any);
+
+      showToast({
+        type: 'success',
+        message: `নতুন সদস্য ${newMemberName} সফলভাবে যুক্ত করা হয়েছে।`,
+      });
+
+      setAddMemberModal(false);
+      setNewMemberName('');
+      setNewMemberPhone('');
+      setNewMemberPass('');
+      setNewMemberRole('HOME_USER');
+      setNewMemberRel('OTHER');
+
+      await loadData();
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        message: err.message || 'সদস্য যুক্ত করা যায়নি।',
+      });
+    } finally {
+      setIsSubmittingNewMember(false);
+    }
   };
 
   const handleOpenEdit = (member: MemberProfile) => {
@@ -189,6 +242,15 @@ export default function FamilyMembersScreen() {
             </BengaliText>
           </View>
         </View>
+
+        {isAdmin && (
+          <PrimaryButton
+            title="নতুন পরিবার সদস্য যুক্ত করুন"
+            icon="person-add-outline"
+            onPress={() => setAddMemberModal(true)}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         <SectionHeader title="পরিবারের সকল সদস্য" count={members.length} />
 
@@ -430,6 +492,123 @@ export default function FamilyMembersScreen() {
             title="কনফিগারেশন সংরক্ষণ করুন"
             onPress={handleSaveProfile}
             loading={isSubmitting}
+            style={{ marginTop: 16, marginBottom: 24 }}
+          />
+        </ScrollView>
+      </BottomSheet>
+
+      {/* Add New Member Bottom Sheet */}
+      <BottomSheet
+        visible={addMemberModal}
+        title="নতুন পরিবার সদস্য যুক্ত করুন"
+        subtitle="সদস্যের নাম, ফোন নম্বর ও প্রাথমিক পাসওয়ার্ড প্রদান করুন"
+        onClose={() => setAddMemberModal(false)}
+      >
+        <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+          <TextInput
+            label="সদস্যের নাম"
+            placeholder="যেমন: মোঃ তানভীর রহমান"
+            value={newMemberName}
+            onChangeText={setNewMemberName}
+            icon="person-outline"
+            required
+          />
+
+          <TextInput
+            label="ফোন নম্বর (লগইন আইডি)"
+            placeholder="০১৭১১XXXXXX"
+            value={newMemberPhone}
+            onChangeText={setNewMemberPhone}
+            keyboardType="phone-pad"
+            icon="call-outline"
+            required
+          />
+
+          <TextInput
+            label="প্রাথমিক পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
+            placeholder="পাসওয়ার্ড প্রদান করুন"
+            value={newMemberPass}
+            onChangeText={setNewMemberPass}
+            secureTextEntry
+            icon="lock-closed-outline"
+            required
+          />
+
+          <BengaliText style={styles.label}>ভূমিকা (Role)</BengaliText>
+          <View style={styles.pillContainer}>
+            <TouchableOpacity
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: newMemberRole === 'HOME_USER' ? colors.primary : colors.surface,
+                  borderColor: newMemberRole === 'HOME_USER' ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => setNewMemberRole('HOME_USER')}
+            >
+              <BengaliText
+                style={[
+                  styles.pillText,
+                  { color: newMemberRole === 'HOME_USER' ? '#FFF' : colors.text },
+                ]}
+              >
+                সাধারণ সদস্য (Member)
+              </BengaliText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: newMemberRole === 'HOME_ADMIN' ? colors.primary : colors.surface,
+                  borderColor: newMemberRole === 'HOME_ADMIN' ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => setNewMemberRole('HOME_ADMIN')}
+            >
+              <BengaliText
+                style={[
+                  styles.pillText,
+                  { color: newMemberRole === 'HOME_ADMIN' ? '#FFF' : colors.text },
+                ]}
+              >
+                পরিবার অ্যাডমিন (Admin)
+              </BengaliText>
+            </TouchableOpacity>
+          </View>
+
+          <BengaliText style={styles.label}>সম্পর্ক (Relationship)</BengaliText>
+          <View style={styles.pillContainer}>
+            {RELATIONSHIPS.map((r) => {
+              const isSelected = newMemberRel === r.value;
+              return (
+                <TouchableOpacity
+                  key={r.value}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: isSelected ? colors.primary : colors.surface,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => setNewMemberRel(r.value)}
+                >
+                  <BengaliText
+                    style={[styles.pillText, { color: isSelected ? '#FFF' : colors.text }]}
+                  >
+                    {r.label}
+                  </BengaliText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <PrimaryButton
+            title="সদস্য অ্যাকাউন্ট তৈরি করুন"
+            onPress={handleAddMember}
+            loading={isSubmittingNewMember}
+            icon="person-add-outline"
+            size="lg"
             style={{ marginTop: 16, marginBottom: 24 }}
           />
         </ScrollView>

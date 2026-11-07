@@ -60,6 +60,42 @@ import { ReceivablesPayablesCard } from '../../src/components/accounting/Receiva
 
 type PeriodFilter = 'TODAY' | 'WEEK' | 'THIS_MONTH' | 'PREV_MONTH' | 'YEAR';
 
+const DEFAULT_PERSONAL_OVERVIEW: PersonalFinancialOverview = {
+  totalIncomePaisa: 0,
+  totalPersonalExpensesPaisa: 0,
+  totalHouseholdContributionsPaisa: 0,
+  totalMoneyLentPaisa: 0,
+  totalMoneyBorrowedPaisa: 0,
+  totalMoneyReceivablePaisa: 0,
+  totalMoneyPayablePaisa: 0,
+  totalCashBalancePaisa: 0,
+  totalBankBalancePaisa: 0,
+  totalAvailableBalancePaisa: 0,
+  totalAssetsPaisa: 0,
+  totalLiabilitiesPaisa: 0,
+  netWorthPaisa: 0,
+  totalFamilyExpensesPaisa: 0,
+  totalFamilyLoansPaisa: 0,
+  outstandingFamilyReceivablesPaisa: 0,
+  totalFamilyAdvancesPaisa: 0,
+  outstandingAdvancesPaisa: 0,
+  totalFamilyContributionsPaisa: 0,
+  totalMoneyReturnedPaisa: 0,
+  totalFamilyGiftsPaisa: 0,
+};
+
+const DEFAULT_HOUSEHOLD_OVERVIEW: HouseholdFinancialOverview = {
+  householdId: '',
+  openingBalancePaisa: 0,
+  totalFundContributionsPaisa: 0,
+  totalApprovedExpensesPaisa: 0,
+  currentFundBalancePaisa: 0,
+  pendingRequestsCount: 0,
+  pendingRequestsPaisa: 0,
+  memberBalances: [],
+  recommendedSettlements: [],
+};
+
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -68,14 +104,14 @@ export default function DashboardScreen() {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<HouseholdFinancialOverview | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [overview, setOverview] = useState<HouseholdFinancialOverview | null>(DEFAULT_HOUSEHOLD_OVERVIEW);
   const [closedMonths, setClosedMonths] = useState<Array<{ year: number; month: number }>>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
 
   // Period Filter for 13 Metrics
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('THIS_MONTH');
-  const [personalOverview, setPersonalOverview] = useState<PersonalFinancialOverview | null>(null);
+  const [personalOverview, setPersonalOverview] = useState<PersonalFinancialOverview>(DEFAULT_PERSONAL_OVERVIEW);
   const [whatIfProjection, setWhatIfProjection] = useState<WhatIfProjection | null>(null);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
@@ -164,93 +200,19 @@ export default function DashboardScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Super Admin Platform Stats
-      if (user?.role === 'SUPER_ADMIN') {
-        try {
-          const [hRes, uRes] = await Promise.all([
-            ApiClient.listHouseholds(),
-            ApiClient.listAllUsers(),
+      // 1. Instantly load from SQLite local store so UI renders in 0ms without skeletons
+      if (user?.id) {
+        const [localAcc, localPeople, personalExpenses, personalTransactions, householdExpenses] =
+          await Promise.all([
+            LocalDbService.getFinancialAccounts(user.id),
+            LocalDbService.getPeople(user.id),
+            LocalDbService.getPersonalExpenses(user.id),
+            LocalDbService.getPersonalTransactions(user.id),
+            user.householdId ? LocalDbService.getHouseholdExpenses(user.householdId) : [],
           ]);
-          const hhList = hRes?.success && Array.isArray(hRes.data) ? hRes.data : [];
-          const uList = uRes?.success && Array.isArray(uRes.data) ? uRes.data : [];
-          setSuperAdminStats({
-            totalHouseholds: hhList.length,
-            activeHouseholds: hhList.filter((h: any) => h.status === 'ACTIVE').length,
-            totalUsers: uList.length,
-            activeUsers: uList.filter((u: any) => u.isActive).length,
-          });
-        } catch {}
-      }
 
-      // 2. Personal Finance Overview (13 KPIs), What-If, Accounts, People, Receivables, Payables
-      const periodDates = getPeriodDates(periodFilter);
-      try {
-        const [overviewRes, whatIfRes, accRes, peopleRes, recRes, payRes] = await Promise.all([
-          ApiClient.getPersonalOverview(periodDates),
-          ApiClient.getWhatIfProjections(),
-          ApiClient.getAccounts(),
-          ApiClient.getPeople(),
-          ApiClient.getReceivables(),
-          ApiClient.getPayables(),
-        ]);
-
-        if (overviewRes?.success && overviewRes.data) {
-          setPersonalOverview(overviewRes.data);
-        }
-        if (whatIfRes?.success && whatIfRes.data) {
-          setWhatIfProjection(whatIfRes.data);
-        }
-        if (accRes?.success && Array.isArray(accRes.data)) {
-          setAccounts(accRes.data);
-          for (const a of accRes.data) {
-            await LocalDbService.upsertFinancialAccount(a, 1);
-          }
-        }
-        if (peopleRes?.success && Array.isArray(peopleRes.data)) {
-          setPeople(peopleRes.data);
-          for (const p of peopleRes.data) {
-            await LocalDbService.upsertPerson(p, 1);
-          }
-        }
-        if (recRes?.success && Array.isArray(recRes.data)) {
-          setReceivables(recRes.data);
-        }
-        if (payRes?.success && Array.isArray(payRes.data)) {
-          setPayables(payRes.data);
-        }
-      } catch (err) {
-        // Fallback to SQLite offline records
-        const [localAcc, localPeople] = await Promise.all([
-          LocalDbService.getFinancialAccounts(user?.id),
-          LocalDbService.getPeople(user?.id),
-        ]);
         setAccounts(localAcc);
         setPeople(localPeople);
-      }
-
-      // 3. Household Financial Overview from Server
-      if (user?.householdId) {
-        try {
-          const [res, closedRes] = await Promise.all([
-            ApiClient.getFinancialOverview(),
-            ApiClient.getClosedMonths(),
-          ]);
-          if (res?.success && res.data) {
-            setOverview(res.data);
-          }
-          if (closedRes?.success && closedRes.data) {
-            setClosedMonths(closedRes.data);
-          }
-        } catch {}
-      }
-
-      // 4. Load from SQLite local store
-      if (user?.id) {
-        const [personalExpenses, personalTransactions, householdExpenses] = await Promise.all([
-          LocalDbService.getPersonalExpenses(user.id),
-          LocalDbService.getPersonalTransactions(user.id),
-          user.householdId ? LocalDbService.getHouseholdExpenses(user.householdId) : [],
-        ]);
 
         // Filter household expense for selected month
         const filteredHH = householdExpenses.filter((h) => {
@@ -292,6 +254,49 @@ export default function DashboardScreen() {
 
         setRecentTransactions(combined.slice(0, 15));
       }
+
+      // Render instantly! No waiting for network or showing skeletons!
+      setLoading(false);
+
+      // 2. Background fetch for fresh server data (silent sync, non-blocking)
+      const periodDates = getPeriodDates(periodFilter);
+      Promise.all([
+        ApiClient.getPersonalOverview(periodDates).catch(() => null),
+        ApiClient.getWhatIfProjections().catch(() => null),
+        ApiClient.getAccounts().catch(() => null),
+        ApiClient.getPeople().catch(() => null),
+        ApiClient.getReceivables().catch(() => null),
+        ApiClient.getPayables().catch(() => null),
+        user?.householdId ? ApiClient.getFinancialOverview().catch(() => null) : null,
+        user?.householdId ? ApiClient.getClosedMonths().catch(() => null) : null,
+        user?.role === 'SUPER_ADMIN' ? ApiClient.listHouseholds().catch(() => null) : null,
+        user?.role === 'SUPER_ADMIN' ? ApiClient.listAllUsers().catch(() => null) : null,
+      ]).then(async ([overviewRes, whatIfRes, accRes, peopleRes, recRes, payRes, hhRes, closedRes, saHRes, saURes]) => {
+        if (overviewRes?.success && overviewRes.data) setPersonalOverview(overviewRes.data);
+        if (whatIfRes?.success && whatIfRes.data) setWhatIfProjection(whatIfRes.data);
+        if (accRes?.success && Array.isArray(accRes.data)) {
+          setAccounts(accRes.data);
+          for (const a of accRes.data) await LocalDbService.upsertFinancialAccount(a, 1);
+        }
+        if (peopleRes?.success && Array.isArray(peopleRes.data)) {
+          setPeople(peopleRes.data);
+          for (const p of peopleRes.data) await LocalDbService.upsertPerson(p, 1);
+        }
+        if (recRes?.success && Array.isArray(recRes.data)) setReceivables(recRes.data);
+        if (payRes?.success && Array.isArray(payRes.data)) setPayables(payRes.data);
+        if (hhRes?.success && hhRes.data) setOverview(hhRes.data);
+        if (closedRes?.success && closedRes.data) setClosedMonths(closedRes.data);
+        if (saHRes?.success && saURes?.success) {
+          const hhList = Array.isArray(saHRes.data) ? saHRes.data : [];
+          const uList = Array.isArray(saURes.data) ? saURes.data : [];
+          setSuperAdminStats({
+            totalHouseholds: hhList.length,
+            activeHouseholds: hhList.filter((h: any) => h.status === 'ACTIVE').length,
+            totalUsers: uList.length,
+            activeUsers: uList.filter((u: any) => u.isActive).length,
+          });
+        }
+      }).catch(() => {});
     } catch (err) {
       console.error('Load dashboard data error:', err);
     } finally {

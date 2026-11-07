@@ -63,7 +63,7 @@ export default function SettlementScreen() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Settlement Record Modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -95,6 +95,7 @@ export default function SettlementScreen() {
       setPersonalExpenses(localPExp);
       setHouseholdExpenses(localHExp);
       setContributions(localContrib);
+      setLoading(false); // Instant load without skeletons!
 
       try {
         const [res, closedRes, pIncRes, pExpRes, hExpRes, contribRes] = await Promise.all([

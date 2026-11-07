@@ -545,6 +545,12 @@ export default function MoreScreen() {
       setMemberPhone("");
       setMemberPass("");
       await loadContributions();
+      if (isAdmin) {
+        const memRes = await ApiClient.listMembers().catch(() => null);
+        if (memRes?.success && Array.isArray(memRes.data)) {
+          setMembers(memRes.data);
+        }
+      }
     } catch (err: any) {
       showToast({
         type: "error",

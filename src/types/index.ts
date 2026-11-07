@@ -2,7 +2,7 @@ export type UserRole = 'SUPER_ADMIN' | 'HOME_ADMIN' | 'HOME_USER';
 
 export type SplitType = 'EQUAL' | 'PERCENTAGE' | 'EXACT';
 
-export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'POST_CLOSING_PENDING';
 
 export type PaymentMethod = 'CASH' | 'BKASH' | 'NAGAD' | 'BANK' | 'OTHER';
 
@@ -68,6 +68,8 @@ export interface HouseholdExpense {
   splits: ExpenseSplitItem[];
   approvalStatus: ApprovalStatus;
   approvedByUserId?: string | null;
+  isPostClosingAdjustment?: boolean;
+  postClosingNotes?: string;
   clientUuid?: string;
 }
 
@@ -84,6 +86,8 @@ export interface ExpenseRequest {
   splits: ExpenseSplitItem[];
   status: ApprovalStatus;
   rejectionReason?: string;
+  isPostClosingAdjustment?: boolean;
+  postClosingNotes?: string;
   clientUuid?: string;
 }
 

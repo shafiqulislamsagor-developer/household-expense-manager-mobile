@@ -191,6 +191,13 @@ export class ApiClient {
     return this.request(`/expenses/household-expenses/${id}`, { method: 'DELETE' });
   }
 
+  public static reviewPostClosingAdjustment(id: string, status: 'APPROVED' | 'REJECTED', notes?: string) {
+    return this.request(`/expenses/household-expenses/${id}/review-post-closing`, {
+      method: 'PATCH',
+      body: { status, notes },
+    });
+  }
+
   public static submitExpenseRequest(data: any) {
     return this.request('/expenses/expense-requests', { method: 'POST', body: data });
   }

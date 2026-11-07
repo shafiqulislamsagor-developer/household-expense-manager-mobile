@@ -5,6 +5,15 @@ const ACCESS_TOKEN_KEY = 'household_access_token';
 const REFRESH_TOKEN_KEY = 'household_refresh_token';
 const APP_PIN_KEY = 'household_app_lock_pin';
 const USER_INFO_KEY = 'household_cached_user';
+const OFFLINE_SESSION_KEY = 'household_offline_session_365d';
+
+export interface OfflineSessionData {
+  user: any;
+  token: string;
+  phone: string;
+  savedAt: number;
+  expiresAt: number;
+}
 
 export class AuthStorage {
   public static async setTokens(accessToken: string, refreshToken?: string): Promise<void> {
@@ -134,6 +143,48 @@ export class AuthStorage {
     } catch {
       return null;
     }
+  }
+
+  public static async saveOfflineSession(user: any, token: string): Promise<void> {
+    const session: OfflineSessionData = {
+      user,
+      token,
+      phone: user.phone || '',
+      savedAt: Date.now(),
+      expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
+    };
+    const json = JSON.stringify(session);
+    if (Platform.OS === 'web') {
+      localStorage.setItem(OFFLINE_SESSION_KEY, json);
+      return;
+    }
+    await SecureStore.setItemAsync(OFFLINE_SESSION_KEY, json);
+  }
+
+  public static async getOfflineSession(): Promise<OfflineSessionData | null> {
+    try {
+      const val =
+        Platform.OS === 'web'
+          ? localStorage.getItem(OFFLINE_SESSION_KEY)
+          : await SecureStore.getItemAsync(OFFLINE_SESSION_KEY);
+      if (!val) return null;
+      const data: OfflineSessionData = JSON.parse(val);
+      if (Date.now() > data.expiresAt) {
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  public static async isOfflineSessionValid(phone?: string): Promise<boolean> {
+    const session = await this.getOfflineSession();
+    if (!session) return false;
+    if (phone && session.phone && session.phone !== phone) {
+      return false;
+    }
+    return Date.now() < session.expiresAt;
   }
 }
 
