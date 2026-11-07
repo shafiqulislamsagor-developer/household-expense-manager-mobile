@@ -61,19 +61,25 @@ npm run lint
 
 - **Application Name**: পারিবারিক ব্যয় ও হিসাব (Household & Family Expense Manager)
 - **Package ID**: `com.householdexpense.app`
-- **Version**: `1.0.0` (Build 1)
-- **File Size**: `96.04 MB` (Valid ZIP/APK signature `504b0304`)
-- **Build Date**: 2026-11-06
+- **Version**: `1.0.1` (Build 2) — *Updated with 365-day offline session & zero-loading state*
+- **File Size**: `96.06 MB` (Valid ZIP/APK signature `504b0304`)
+- **Build Date**: 2026-11-07
 - **Production API URL**: `https://household-expense-manager-backend.vercel.app/api/v1`
-- **EAS Build ID**: `23eb04ef-f70f-43a7-9e9f-1aea279d155d`
-- **EAS Build Logs**: [View on Expo Dashboard](https://expo.dev/accounts/shafiqulislamsagor/projects/household-expense-manager/builds/23eb04ef-f70f-43a7-9e9f-1aea279d155d)
-- **Direct APK Download Link (Fast Cloud CDN)**: [Download Household Expense Manager APK (Direct)](https://expo.dev/artifacts/eas/GbLRtfp0mCjDuyYKdiNkIG9NBQwZBbPkbugZxOC8lEQ.apk)
+- **EAS Build ID**: `ae73a217-8707-46c2-bb34-745ae4f51f45`
+- **EAS Build Logs**: [View on Expo Dashboard](https://expo.dev/accounts/shafiqulislamsagor/projects/household-expense-manager/builds/ae73a217-8707-46c2-bb34-745ae4f51f45)
+- **Direct APK Download Link (Fast Cloud CDN)**: [Download Household Expense Manager APK (Direct CDN)](https://expo.dev/artifacts/eas/wUHnVFOxOdWn3vG8pCjZFu4BDmeiMg7o7IRgzYx-570.apk)
 - **GitHub Direct Download Link**: [Download Household Expense Manager APK (GitHub)](https://github.com/shafiqulislamsagor-developer/household-expense-manager-mobile/raw/main/releases/household-expense-manager.apk)
 - **Relative Download Link**: [Download Household Expense Manager APK](releases/household-expense-manager.apk)
 - **Local File Path**: `releases/household-expense-manager.apk`
 
+### New in Version 1.0.1 (Build 2):
+- **৩৬৫ দিনের অফলাইন সেশন**: প্রথমবার অনলাইনে লগইন করার পর ফোনে ৩৬৫ দিনের জন্য সেশন সংরক্ষিত থাকবে। অফলাইনে থাকলেও সরাসরি অ্যাপ ব্যবহার করা যাবে।
+- **ইনস্ট্যান্ট ০ms লোডিং**: কোনো স্ক্রিনেই স্কেলিটন বা লোডিং আটকে থাকবে না। অফলাইন স্টোরেজে ডাটা না থাকলে ডিফল্ট `৳০.০০` দেখাবে।
+- **ফ্যামিলি অ্যাডমিন সদস্য তৈরি**: পরিবার অ্যাডমিন সরাসরি সদস্য প্রোফাইল স্ক্রিন থেকে নতুন মেম্বার (রোল ও রিলেশনশিপ সহ) যোগ করতে পারবেন।
+- **পোস্ট-ক্লোজিং সমন্বয়**: মাস ক্লোজ থাকা অবস্থায় অফলাইনে যুক্ত খরচ অনলাইন হলে অ্যাডমিনের কাছে অনুমোদনের জন্য যাবে এবং মূল তালিকায় ব্যাজ সহ প্রদর্শিত হবে।
+
 ### Installation Instructions:
-1. Tap the **[Download Household Expense Manager APK (Direct)](https://expo.dev/artifacts/eas/GbLRtfp0mCjDuyYKdiNkIG9NBQwZBbPkbugZxOC8lEQ.apk)** link above on your Android phone.
+1. Tap the **[Download Household Expense Manager APK (Direct CDN)](https://expo.dev/artifacts/eas/wUHnVFOxOdWn3vG8pCjZFu4BDmeiMg7o7IRgzYx-570.apk)** link above on your Android phone.
 2. Tap the downloaded `household-expense-manager.apk` file to start installation.
 3. If Android prompts *"For your security, your phone is not allowed to install unknown apps from this source"*, tap **Settings** $\rightarrow$ toggle on **"Allow from this source"**.
 4. If Google Play Protect displays a prompt (*"Unrecognized app"*), tap **"More details"** $\rightarrow$ tap **"Install anyway"**.
